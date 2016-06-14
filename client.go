@@ -32,7 +32,7 @@ type Client struct {
 
 	RtspTimeout time.Duration
 	RtpTimeout time.Duration
-	RtpKeepAliveTimeout time.Duration
+	RtpKeepAliveTimeout int
 	rtpKeepaliveTimer time.Time
 
 	setupCalled bool
@@ -117,17 +117,13 @@ func (self *Client) Streams() (streams []av.CodecData, err error) {
 }
 
 func (self *Client) sendRtpKeepalive() (err error) {
-	if self.RtpKeepAliveTimeout > 0 {
-		if self.rtpKeepaliveTimer.IsZero() {
-			self.rtpKeepaliveTimer = time.Now()
-		} else if time.Now().Sub(self.rtpKeepaliveTimer) > self.RtpKeepAliveTimeout {
-			self.rtpKeepaliveTimer = time.Now()
-			if self.DebugConn {
-				fmt.Println("rtp: keep alive")
-			}
-			if err = self.Options(); err != nil {
-				return
-			}
+	if int(time.Now().Sub(self.rtpKeepaliveTimer).Seconds()) > self.RtpKeepAliveTimeout {
+		self.rtpKeepaliveTimer = time.Now()
+		if self.DebugConn {
+			fmt.Println("rtp: keep alive")
+		}
+		if err = self.Options(); err != nil {
+			return
 		}
 	}
 	return
@@ -917,6 +913,9 @@ func Open(uri string) (cli *Client, err error) {
 	if err = _cli.ReadHeader(); err != nil {
 		return
 	}
+	//default
+	_cli.rtpKeepaliveTimer = time.Now()
+	_cli.RtpKeepAliveTimeout = 20
 	cli = _cli
 	return
 }
