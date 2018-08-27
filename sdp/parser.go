@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"encoding/hex"
 	"encoding/base64"
-	"github.com/nareix/av"
+	"github.com/deepch/av"
 )
 
 type Info struct {
